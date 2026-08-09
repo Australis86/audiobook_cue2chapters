@@ -7,8 +7,8 @@ This script was written to solve a very specific problem: to extract
 the chapters/episodes from a CD image (i.e. a CUE+WAV or CUE+FLAC) of 
 an audiobook, audio drama or radio play and ensure that all the tracks
 for each chapter/episode were combined but individual chapters/episodes 
-were not. It could then optionally convert each chapter/episode to MP3 
-for use with an MP3 player.
+were not. Each chapter/episode would then be converted to MP3 for use 
+with an MP3 player.
 
 It was inspired by these scripts:
 
@@ -36,8 +36,9 @@ optional parameters:
 | --- | --- | --- |
 | -b | 128 | target MP3 bitrate in kbps (default 192) |
 | -g | "Audio Theatre" | Set a custom genre (default is "Audiobook") |
+| -d | /path/to/working/dir | Set a custom working directory (default is the directory containing the CUE file) |
 | -a | | Boolean flag to append the prologue and epilogue to the adjacent chapter (useful for gapless audio dramas where these connect to opening or closing titles/themes) |
-| -i | | Boolean flag to preserve intermediate files (default is to automatically clean up) |
+| -i | | Boolean flag to preserve intermediate WAV/FLAC files (default is to automatically clean up) |
 | -o | | Boolean flag to enable overwriting existing files |
 | -v | | Boolean flag to enable verbose output |
 
