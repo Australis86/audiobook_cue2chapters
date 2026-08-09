@@ -182,7 +182,7 @@ function split_cue() {
         segment_regex_main='^[0-9]+[[:space:]]+(Chapter|Episode|Part)[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
         
         # Regex for extras such as music, behind-the-scenes and interviews
-        segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
+        segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews|Behind[[:space:]]the[[:space:]]Scenes).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)*'
 
         declare -i segment_counter=0
         segment_tracker=""
