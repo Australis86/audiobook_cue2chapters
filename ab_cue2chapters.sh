@@ -93,13 +93,15 @@ function check_cue() {
 function split_cue() {
     cuefilepath=$1
     workingdir=$2
-    
+
     cuename=`basename "$cuefilepath"`
     outdir="$workingdir/${cuename%.*}"
     outdir_split="$outdir/split"
     outdir_concat="$outdir/concat"
     mkdir -p "$outdir_split"
     mkdir -p "$outdir_concat"
+
+    echo "Processing $cuename ..."
 
     if $VERBOSE; then echo "Writing output files to $outdir_split/"; fi
 
@@ -177,7 +179,10 @@ function split_cue() {
 
         # Regex to match parts
         # This should match "02 Chapter One", "02 - Part 1", "02 Episode 1", etc.
-        segment_regex='^[0-9]+[[:space:]]+Chapter|Episode|Part[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
+        segment_regex_main='^[0-9]+[[:space:]]+(Chapter|Episode|Part)[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
+        
+        # Regex for extras such as music, behind-the-scenes and interviews
+        segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
 
         declare -i segment_counter=0
         segment_tracker=""
@@ -188,16 +193,16 @@ function split_cue() {
             filename="$(basename "$filepath")"
             name_no_ext="${filename%.*}"
 
-            if [[ $name_no_ext =~ $segment_regex ]]; then
-                segment_number="${BASH_REMATCH[1]}" # match group corresponding to chapter/part/episode number
+            if [[ $name_no_ext =~ $segment_regex_main || $name_no_ext =~ $segment_regex_extras ]]; then
+                prefix="${BASH_REMATCH[1]}"             # segment type
 
-                # Match the segment type
-                if [[ $name_no_ext =~ "Part" ]]; then prefix="Part"
-                elif [[ $name_no_ext =~ "Episode" ]]; then prefix="Episode"
-                else prefix="Chapter"
+                # Distinguish between chapters/episodes/parts and extras, which are usually standalone
+                if [[ $name_no_ext =~ $segment_regex_main ]]; then
+                    segment_number="${BASH_REMATCH[2]}"     # match group corresponding to chapter/part/episode number
+                    segment_name="$prefix $segment_number"  # create the segment name
+                else
+                    segment_name="$prefix"                  # create the segment name
                 fi
-
-                segment_name="$prefix $segment_number"     # create the segment name
 
                 if [[ "$segment_tracker" != "$segment_name" ]]; then
                     segment_tracker=$segment_name
@@ -366,7 +371,7 @@ for file in "$@"; do
 
     # Get the path to the CUE file
     cuedir=`dirname "$file"`
-    
+
     if [ -z "$WORKING_DIR" ]; then
         WORKING_DIR=$cuedir
     fi
