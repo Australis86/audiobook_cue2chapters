@@ -177,9 +177,11 @@ function split_cue() {
         # Iterate through them and try to match against chapter/episode/part
         declare -A chapter_arr
 
-        # Regex to match parts
-        # This should match "02 Chapter One", "02 - Part 1", "02 Episode 1", etc.
+        # Regex to match chapters, parts and episodes, e.g. "02 Chapter One", "02 - Part 1", "02 Episode 1", etc.
         segment_regex_main='^[0-9]+[[:space:]]+(Chapter|Episode|Part)[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
+
+        # Regex to match titled episodes (e.g. "[Episode Name], Part 1")
+        segment_regex_episodes='^[0-9]+[[:space:]]+(.*),[[:space:]]+(Part[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+))'
         
         # Regex for extras such as music, behind-the-scenes and interviews
         segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews|Behind[[:space:]]the[[:space:]]Scenes).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)*'
@@ -193,13 +195,16 @@ function split_cue() {
             filename="$(basename "$filepath")"
             name_no_ext="${filename%.*}"
 
-            if [[ $name_no_ext =~ $segment_regex_main || $name_no_ext =~ $segment_regex_extras ]]; then
+            if [[ $name_no_ext =~ $segment_regex_main || $name_no_ext =~ $segment_regex_episodes || $name_no_ext =~ $segment_regex_extras ]]; then
                 prefix="${BASH_REMATCH[1]}"             # segment type
 
                 # Distinguish between chapters/episodes/parts and extras, which are usually standalone
                 if [[ $name_no_ext =~ $segment_regex_main ]]; then
                     segment_number="${BASH_REMATCH[2]}"     # match group corresponding to chapter/part/episode number
                     segment_name="$prefix $segment_number"  # create the segment name
+                elif [[ $name_no_ext =~ $segment_regex_episodes ]]; then
+                    segment_number="${BASH_REMATCH[2]}"     # match group corresponding to chapter/part/episode number
+                    segment_name="$prefix, $segment_number" # create the segment name
                 else
                     segment_name="$prefix"                  # create the segment name
                 fi
