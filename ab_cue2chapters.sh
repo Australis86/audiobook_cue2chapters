@@ -98,14 +98,15 @@ function split_cue() {
     outdir="$workingdir/${cuename%.*}"
     outdir_split="$outdir/split"
     outdir_concat="$outdir/concat"
+
+    if $VERBOSE; then echo "Writing output files to $outdir_split/"; fi
+    files=$(shopt -s nullglob dotglob; echo "${outdir_split}"*)
+
     mkdir -p "$outdir_split"
     mkdir -p "$outdir_concat"
 
     echo "Processing $cuename ..."
 
-    if $VERBOSE; then echo "Writing output files to $outdir_split/"; fi
-
-    files=$(shopt -s nullglob dotglob; echo "${outdir_split}"*)
     if (( ${#files} )) && [ $OVERWRITE == "false" ]; then
         echo "ERROR: Output directory already contains files; aborting"
         return 1
@@ -117,6 +118,7 @@ function split_cue() {
         rm -f "$outdir/"*.mp3
 
         # Use shntool to split the cue file into tracks
+        # Unfortunately this separates out the track 1 pregap, which causes problems for cuetag
         if $VERBOSE; then
             shntool split -f "$cuefilepath" -o $AUDIO_FORMAT -t "%n %t" -O always "$AUDIO_FILE" -d "$outdir_split"
         else
@@ -128,6 +130,12 @@ function split_cue() {
         if [ $ec -ne 0 ]; then
             echo "Splitting failed. Please examine output folder and clean up any intermediate files."
             return 67
+        fi
+
+        # Exclude any pregap files
+        if [ -f "$outdir_split/00 pregap.$AUDIO_FORMAT" ]; then
+            echo "Pregap file detected; renaming to avoid conflicts ..."
+            mv "$outdir_split/00 pregap.$AUDIO_FORMAT" "$outdir_split/00 pregap.ign"
         fi
 
         # If cuetag is available, copy metadata from original cue to new tracks
@@ -182,7 +190,7 @@ function split_cue() {
 
         # Regex to match titled episodes (e.g. "[Episode Name], Part 1")
         segment_regex_episodes='^[0-9]+[[:space:]]+(.*),[[:space:]]+(Part[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+))'
-        
+
         # Regex for extras such as music, behind-the-scenes and interviews
         segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews|Behind[[:space:]]the[[:space:]]Scenes).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)*'
 
