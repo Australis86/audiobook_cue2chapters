@@ -188,11 +188,15 @@ function split_cue() {
         # Regex to match chapters, parts and episodes, e.g. "02 Chapter One", "02 - Part 1", "02 Episode 1", etc.
         segment_regex_main='^[0-9]+[[:space:]]+(Chapter|Episode|Part)[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)'
 
-        # Regex to match titled episodes (e.g. "[Episode Name], Part 1")
-        segment_regex_episodes='^[0-9]+[[:space:]]+(.*),[[:space:]]+(Part[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+))'
+        # Regex to match titled episodes (e.g. "[Book Title], Part 1" or "[Book Title], Episode 1")
+        # This for audio dramas that have Episodes 1-N, or Parts 1-N, split into tracks
+        segment_regex_episodes='^[0-9]+[[:space:]]+(.*),[[:space:]]+((Part|Episode)[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+))'
+
+        # Regex for audiobooks and narrated soundtracks that are split by scene
+        segment_regex_scenes='^[0-9]+[[:space:]]+(.*),[[:space:]]+((Scene|Scenes)[[:space:]]+(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+))'
 
         # Regex for extras such as music, behind-the-scenes and interviews
-        segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews|Behind[[:space:]]the[[:space:]]Scenes).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)*'
+        segment_regex_extras='^[0-9]+[[:space:]]+(Music|Interviews|Behind[[:space:]]the[[:space:]]Scenes|(.*Interview)).*(One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|[0-9]+)*'
 
         declare -i segment_counter=0
         segment_tracker=""
@@ -203,18 +207,22 @@ function split_cue() {
             filename="$(basename "$filepath")"
             name_no_ext="${filename%.*}"
 
-            if [[ $name_no_ext =~ $segment_regex_main || $name_no_ext =~ $segment_regex_episodes || $name_no_ext =~ $segment_regex_extras ]]; then
+            if [[ $name_no_ext =~ $segment_regex_main || $name_no_ext =~ $segment_regex_episodes || $name_no_ext =~ $segment_regex_scenes || $name_no_ext =~ $segment_regex_extras ]]; then
                 prefix="${BASH_REMATCH[1]}"             # segment type
 
                 # Distinguish between chapters/episodes/parts and extras, which are usually standalone
                 if [[ $name_no_ext =~ $segment_regex_main ]]; then
                     segment_number="${BASH_REMATCH[2]}"     # match group corresponding to chapter/part/episode number
                     segment_name="$prefix $segment_number"  # create the segment name
+                    #echo "Matched to main"
                 elif [[ $name_no_ext =~ $segment_regex_episodes ]]; then
                     segment_number="${BASH_REMATCH[2]}"     # match group corresponding to chapter/part/episode number
+                    # TO DO: Add a switch here to allow title + part to be merged (no segment number) or not (with segment number)
                     segment_name="$prefix, $segment_number" # create the segment name
+                    #echo "Matched to episode"
                 else
                     segment_name="$prefix"                  # create the segment name
+                    #echo "Matched to extras"
                 fi
 
                 if [[ "$segment_tracker" != "$segment_name" ]]; then
